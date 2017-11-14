@@ -19,7 +19,7 @@ namespace TspHopfield
         private double Tau { get; } = 1;
         private double Timestep { get; } = 0.001;
 
-        private double Bias { get => C * (size); }
+        private double Bias { get => C * (size * 1.5); }
 
         private double[,] distances;
         private double[,] States { get; set; }
@@ -48,6 +48,39 @@ namespace TspHopfield
             }
         }
 
+        public void PrintWeights()
+        {
+            Console.WriteLine("WEIGHTS");
+            for (int c1 = 0; c1 < size; c1++)
+            {
+                Console.WriteLine($"From {c1}");
+                for (int p1 = 0; p1 < size; p1++)
+                {
+                    double weightedSum = 0.0;
+                    for (var c2 = 0; c2 < size; c2++)
+                    {
+                        for (var p2 = 0; p2 < size; p2++)
+                        {
+                            Console.Write($@"{ weights
+                                         .cities[c2]
+                                         .positions[p2]
+                                         .Cities[c1]
+                                         .Position[p1]:-####.#;+####.#}  ");
+                            weightedSum += weights
+                                        .cities[c2]
+                                        .positions[p2]
+                                        .Cities[c1]
+                                        .Position[p1];
+                        }
+                        Console.Write(" ");
+                    }
+                    Console.WriteLine();
+                    Console.WriteLine($@"{ weightedSum:-####.#;+####.#}  ");
+                }
+                Console.WriteLine();
+            }
+        }
+
         public void PrintState()
         {
             for (int city = 0; city < size; city++)
@@ -55,7 +88,7 @@ namespace TspHopfield
                 Console.Write($"SSS");
                 for (int pos = 0; pos < size; pos++)
                 {
-                    Console.Write($"{States[city, pos]} ");
+                    Console.Write($"{States[city, pos]:-0.###;+0.###} ");
                 }
                 Console.WriteLine();
             }
@@ -64,7 +97,7 @@ namespace TspHopfield
             {
                 for (int pos = 0; pos < size; pos++)
                 {
-                    Console.Write($"{GetActivation(States[city, pos])} ");
+                    Console.Write($"{GetActivation(States[city, pos]):-0.###;+0.###} ");
                 }
                 Console.WriteLine();
             }
@@ -152,7 +185,7 @@ namespace TspHopfield
                                 if (position != firstPos)
                                 {
                                     weightedSum +=
-                                        GetActivation(States[firstCity, firstPos])
+                                        States[firstCity, firstPos]
                                         * weights
                                         .cities[firstCity]
                                         .positions[firstPos]
