@@ -17,7 +17,7 @@ namespace TspHopfield
         private int D { get; } = 500;
         private double U0 { get; } = 0.02;
         private double Tau { get; } = 1;
-        private double Timestep { get; } = 0.001;
+        private double Timestep { get; } = 0.000001;
 
         private double Bias { get => C * (size * 1.5); }
 
@@ -43,7 +43,9 @@ namespace TspHopfield
                     States[i, j] = 1;
                     States[i, j] /= size;
                     States[i, j] /= size;
-                    States[i, j] += (Rng.NextDouble() - 0.5) / 10;
+
+                    var a = (Rng.NextDouble()) / 50;
+                    States[i, j] += Rng.NextDouble() > 0.5 ? a : -a;
                 }
             }
         }
@@ -65,7 +67,7 @@ namespace TspHopfield
                                          .cities[c2]
                                          .positions[p2]
                                          .Cities[c1]
-                                         .Position[p1]:-####.#;+####.#}  ");
+                                         .Position[p1]:-###0.0;+###0.0}  ");
                             weightedSum += weights
                                         .cities[c2]
                                         .positions[p2]
@@ -75,7 +77,7 @@ namespace TspHopfield
                         Console.Write(" ");
                     }
                     Console.WriteLine();
-                    Console.WriteLine($@"{ weightedSum:-####.#;+####.#}  ");
+                    Console.WriteLine($@"{ weightedSum:-###0.0;+###0.0}  ");
                 }
                 Console.WriteLine();
             }
@@ -85,20 +87,23 @@ namespace TspHopfield
         {
             for (int city = 0; city < size; city++)
             {
-                Console.Write($"SSS");
+                Console.Write($"SSS ");
                 for (int pos = 0; pos < size; pos++)
                 {
-                    Console.Write($"{States[city, pos]:-0.###;+0.###} ");
+                    Console.Write($"{States[city, pos]:0.0##} ");
                 }
                 Console.WriteLine();
             }
             Console.WriteLine();
             for (int city = 0; city < size; city++)
             {
+                bool onlyZeros = true;
                 for (int pos = 0; pos < size; pos++)
                 {
-                    Console.Write($"{GetActivation(States[city, pos]):-0.###;+0.###} ");
+                    onlyZeros = GetActivation(States[city, pos]) == 0 ? onlyZeros : false;
+                    Console.Write($"{GetActivation(States[city, pos]):-0.0##;+0.0##} ");
                 }
+                if (onlyZeros) Console.Write(" FAIL HERE ");
                 Console.WriteLine();
             }
             Console.WriteLine();
@@ -162,7 +167,11 @@ namespace TspHopfield
 
         public double GetActivation(double input)
         {
-            return 0.5 * (1 + Math.Tanh(input / U0));
+            var sigm = 0.5 * (1 + Math.Tanh(input / U0));
+            var activ = sigm < 0.2 ? 0 : sigm;
+            activ = sigm > 0.8 ? 1 : activ;
+
+            return sigm;
         }
 
         public void Update()
@@ -200,6 +209,92 @@ namespace TspHopfield
                 }
             }
             UpdateInputs(inputsChange);
+        }
+
+        public void Update2()
+        {
+            var statesChange = new double[size, size];
+            for (int city = 0; city < size; city++)
+            {
+                for (int pos = 0; pos < size; pos++)
+                {
+                    statesChange[city, pos] = Timestep * StateFromMotion(city, pos);
+                }
+            }
+            for (int city = 0; city < size; city++)
+            {
+                for (int pos = 0; pos < size; pos++)
+                {
+                    States[city, pos] += statesChange[city, pos];
+                }
+            }
+        }
+
+        public double StateFromMotion(int city, int pos)
+        {
+            double stateChange =
+                -States[city, pos]
+                - GetA(city, pos)
+                - GetB(city, pos)
+                - GetC()
+                - GetD(pos, city);
+
+            return stateChange;
+        }
+
+        public double GetA(int city, int position)
+        {
+            double sum = 0.0;
+            for (int pos = 0; pos < size; pos++)
+            {
+                sum += GetActivation(States[city, pos]);
+            }
+            sum -= GetActivation(States[city, position]);
+            sum *= A;
+            return sum;
+        }
+
+        public double GetB(int mainCity, int position)
+        {
+            double sum = 0.0;
+            for (int city = 0; city < size; city++)
+            {
+                sum += GetActivation(States[city, position]);
+            }
+            sum -= GetActivation(States[mainCity, position]);
+            sum *= B;
+            return sum;
+        }
+
+        public double GetC()
+        {
+            var sum = 0.0;
+            for (int city = 0; city < size; city++)
+            {
+                for (int pos = 0; pos < size; pos++)
+                {
+                    sum += GetActivation(States[city, pos]);
+                }
+            }
+            sum -= size;
+            sum *= C;
+            return sum;
+        }
+
+        public double GetD(int position, int mainCity)
+        {
+            var sum = 0.0;
+            for (int city = 0; city < size; city++)
+            {
+                var minPos = position - 1 < 0 ? size - 1 : position - 1;
+                var maxPos = position + 1 >= size ? 0 : position + 1;
+                sum += distances[mainCity, city] * (
+                    GetActivation(States[city, minPos])
+                + GetActivation(States[city, maxPos]));
+            }
+
+            sum *= D;
+            return sum;
         }
 
         public void UpdateInputs(double[,] statesChange)

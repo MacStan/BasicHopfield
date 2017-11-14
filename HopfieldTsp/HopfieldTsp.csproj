@@ -57,6 +57,7 @@
     <Compile Include="Containers\Position.cs" />
     <Compile Include="Containers\SecCity.cs" />
     <Compile Include="Containers\WeightsContainer.cs" />
+    <Compile Include="DistancesCreator.cs" />
     <Compile Include="Network.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

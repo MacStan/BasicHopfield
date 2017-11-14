@@ -17,16 +17,28 @@ namespace UnitTests
             [TestMethod]
             public void TestMethod1()
             {
-                var patterns = new List<List<double>>()
-                 {
-                     new List<double>(){ 0, 2, 4},
-                     new List<double>(){ 2, 0, 2.0 * Math.Sqrt(2) },
-                     new List<double>(){ 4, 2.0 * Math.Sqrt(2), 0 },
-                };
-                var net = new Network(3, patterns);
+                var rnd = new Random();
+                var size = 3;
+                var patterns = new double[,]
+                     {
+                     { 0, 2, 4},
+                     { 2, 0, 1.41},
+                     { 4, 1.41, 0},
+                         /* { 0, 2, 3.6,3.6},
+                         { 2, 0, 2.33,3 },
+                         { 3.6,2.33,0,1.41 },
+                         { 3.6, 3, 1.41,0},*/
+                    };
+                var net = new Network(size, patterns);
                 net.CreateWeights();
 
-                Console.Write("test");
+                for (int i = 0; i < 10000; i++)
+                {
+                    net.PrintState();
+                    net.Update2();
+                    //net.PrintWeights();
+                }
+                Thread.Sleep(60 * 1000);
             }
         }
     }
